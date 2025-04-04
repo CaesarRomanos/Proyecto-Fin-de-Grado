@@ -1,0 +1,159 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848409ee8ba454f42a5ddff137688a27, type: 3}
+  m_Name: ReferenceImageLibrary
+  m_EditorClassIdentifier: 
+  m_GuidLow: 4870782580105313332
+  m_GuidHigh: 8610951994349289383
+  m_DataStore:
+    m_Storage: []
+  m_Images:
+  - m_SerializedGuid:
+      m_GuidLow: 5194767009337870912
+      m_GuidHigh: 14458104929943072925
+    m_SerializedTextureGuid:
+      m_GuidLow: 7977220852411743722
+      m_GuidHigh: 17877515194859516459
+    m_Size: {x: 1, y: 1}
+    m_SpecifySize: 1
+    m_Name: irlDate
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 4898222400096357229
+      m_GuidHigh: 4366769216706584473
+    m_SerializedTextureGuid:
+      m_GuidLow: 302932613693885794
+      m_GuidHigh: 14865756690320931560
+    m_Size: {x: 1, y: 1}
+    m_SpecifySize: 1
+    m_Name: irlSoldier
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5524199273365848840
+      m_GuidHigh: 6222653897855431600
+    m_SerializedTextureGuid:
+      m_GuidLow: 14926197199096825028
+      m_GuidHigh: 114068938429877817
+    m_Size: {x: 1, y: 1}
+    m_SpecifySize: 1
+    m_Name: irlMonk
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5229654755377245048
+      m_GuidHigh: 13574291410829094286
+    m_SerializedTextureGuid:
+      m_GuidLow: 13386062946380468465
+      m_GuidHigh: 9001384436306057305
+    m_Size: {x: 1, y: 0.54414785}
+    m_SpecifySize: 1
+    m_Name: irlDate
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 4835914546317580057
+      m_GuidHigh: 8214490485673763719
+    m_SerializedTextureGuid:
+      m_GuidLow: 15245827128498906668
+      m_GuidHigh: 4380621149777796937
+    m_Size: {x: 0, y: 0}
+    m_SpecifySize: 0
+    m_Name: irlDate
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5551215649877515636
+      m_GuidHigh: 9972379078353503134
+    m_SerializedTextureGuid:
+      m_GuidLow: 8598561897241984081
+      m_GuidHigh: 1771231805550768555
+    m_Size: {x: 0, y: 0}
+    m_SpecifySize: 0
+    m_Name: irlDate
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 4718435444648464220
+      m_GuidHigh: 8982805632945198979
+    m_SerializedTextureGuid:
+      m_GuidLow: 11494500651267169668
+      m_GuidHigh: 15341890262522793193
+    m_Size: {x: 0, y: 0}
+    m_SpecifySize: 0
+    m_Name: irlSoldier
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5709839713896090048
+      m_GuidHigh: 13230085319502871201
+    m_SerializedTextureGuid:
+      m_GuidLow: 1482923493013383734
+      m_GuidHigh: 4448773165513907738
+    m_Size: {x: 0, y: 0}
+    m_SpecifySize: 0
+    m_Name: irlSoldier
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5538921122213827479
+      m_GuidHigh: 14531055120200213684
+    m_SerializedTextureGuid:
+      m_GuidLow: 4252579931189013867
+      m_GuidHigh: 362476443850257449
+    m_Size: {x: 0, y: 0}
+    m_SpecifySize: 0
+    m_Name: irlSoldier
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 4658394184204090436
+      m_GuidHigh: 1454403935407572112
+    m_SerializedTextureGuid:
+      m_GuidLow: 3991421463918425071
+      m_GuidHigh: 12898780252917136347
+    m_Size: {x: 0, y: 0}
+    m_SpecifySize: 0
+    m_Name: irlSoldier
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5566790100805902722
+      m_GuidHigh: 9044081740860212353
+    m_SerializedTextureGuid:
+      m_GuidLow: 13854224118231604732
+      m_GuidHigh: 8407278344717100729
+    m_Size: {x: 0, y: 0}
+    m_SpecifySize: 0
+    m_Name: irlMonk
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5441012311489085567
+      m_GuidHigh: 3785124131493205693
+    m_SerializedTextureGuid:
+      m_GuidLow: 6405282510363984840
+      m_GuidHigh: 5418614033206246649
+    m_Size: {x: 0, y: 0}
+    m_SpecifySize: 0
+    m_Name: irlMonk
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5506135777552933407
+      m_GuidHigh: 13237177590808139940
+    m_SerializedTextureGuid:
+      m_GuidLow: 17281675075897624762
+      m_GuidHigh: 3544540730183352857
+    m_Size: {x: 0, y: 0}
+    m_SpecifySize: 0
+    m_Name: irlMonk
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5074661340065383794
+      m_GuidHigh: 8498595443016053163
+    m_SerializedTextureGuid:
+      m_GuidLow: 3653825362047497248
+      m_GuidHigh: 12945706290113359752
+    m_Size: {x: 0, y: 0}
+    m_SpecifySize: 0
+    m_Name: irlMonk
+    m_Texture: {fileID: 0}

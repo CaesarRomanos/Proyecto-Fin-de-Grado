@@ -1,7 +1,7 @@
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
-using UnityEngine.UI;
 using System.Collections.Generic;
 
 public class ImageTrackingOverlayManager : MonoBehaviour
@@ -18,7 +18,7 @@ public class ImageTrackingOverlayManager : MonoBehaviour
     [Tooltip("Factor para reducir el tamaño del overlay en modo AR.")]
     [SerializeField] private float scaleFactor = 0.1f;
 
-    [Header("Configuración UI y Overlay fijo")]
+    [Header("Configuración UI y Overlay Fijo")]
     [Tooltip("Botón del Canvas para fijar/eliminar el overlay.")]
     [SerializeField] private Button fullScreenButton;
     [Tooltip("Cámara AR para conversión de coordenadas.")]
@@ -30,12 +30,12 @@ public class ImageTrackingOverlayManager : MonoBehaviour
     private Dictionary<ARTrackedImage, GameObject> overlays = new Dictionary<ARTrackedImage, GameObject>();
     private Dictionary<string, ARTrackedImage> activePoolImages = new Dictionary<string, ARTrackedImage>();
 
-    // Pools de nombres de referencia
+    // Pools según el nombre de referencia
     private List<string> datePool = new List<string> { "irlDate" };
     private List<string> soldierPool = new List<string> { "irlSoldier" };
     private List<string> monkPool = new List<string> { "irlMonk" };
 
-    // Overlay fijado (por botón).
+    // Overlay fijo (cuando se pulsa el botón)
     private GameObject fixedOverlay = null;
 
     void OnEnable()
@@ -61,7 +61,7 @@ public class ImageTrackingOverlayManager : MonoBehaviour
             fullScreenButton.onClick.RemoveListener(OnFullScreenButtonClicked);
     }
 
-    // Solo se procesa el tracking mientras no haya un overlay fijo.
+    // Solo se procesa el tracking si no hay un overlay fijo ya asignado.
     void OnTrackedImagesChanged(ARTrackedImagesChangedEventArgs eventArgs)
     {
         if (fixedOverlay != null)
@@ -81,11 +81,9 @@ public class ImageTrackingOverlayManager : MonoBehaviour
     {
         if (image.trackingState != TrackingState.Tracking)
             return;
-
         string poolKey = GetPoolKey(image.referenceImage.name);
         if (string.IsNullOrEmpty(poolKey))
             return;
-
         activePoolImages[poolKey] = image;
     }
 
@@ -100,7 +98,7 @@ public class ImageTrackingOverlayManager : MonoBehaviour
         return null;
     }
 
-    // Crea o actualiza el overlay AR para cada pool.
+    // Para cada pool, crea o actualiza el overlay AR correspondiente.
     void UpdateOverlays()
     {
         foreach (string poolKey in new string[] { "irlDate", "irlSoldier", "irlMonk" })
@@ -108,7 +106,7 @@ public class ImageTrackingOverlayManager : MonoBehaviour
             ARTrackedImage candidate = activePoolImages.ContainsKey(poolKey) ? activePoolImages[poolKey] : null;
             if (candidate == null)
             {
-                // Si no hay imagen para el pool, se eliminan los overlays asociados.
+                // Elimina los overlays asociados a este pool.
                 foreach (var kvp in new List<ARTrackedImage>(overlays.Keys))
                 {
                     if (GetPoolKey(kvp.referenceImage.name) == poolKey)
@@ -116,18 +114,16 @@ public class ImageTrackingOverlayManager : MonoBehaviour
                 }
                 continue;
             }
-
             if (!overlays.ContainsKey(candidate))
             {
-                // Elimina overlays antiguos de este pool y crea el nuevo.
+                // Elimina overlays anteriores del mismo pool y crea uno nuevo.
                 foreach (var kvp in new List<ARTrackedImage>(overlays.Keys))
                 {
                     if (GetPoolKey(kvp.referenceImage.name) == poolKey)
                         RemoveOverlay(kvp);
                 }
                 CreateOverlay(candidate, poolKey);
-                if (fullScreenButton)
-                    fullScreenButton.gameObject.SetActive(true);
+                if (fullScreenButton) fullScreenButton.gameObject.SetActive(true);
             }
             else
             {
@@ -148,14 +144,12 @@ public class ImageTrackingOverlayManager : MonoBehaviour
         if (prefab == null)
             return;
 
-        Vector3 pos = image.transform.position;
-        // Se instancia con rotación base para AR (90° en X) y se añade BoxCollider si no tiene.
-        GameObject instance = Instantiate(prefab, pos, Quaternion.Euler(90f, 0f, 0f));
+        // Instancia con rotación base para AR (90° en X)
+        GameObject instance = Instantiate(prefab, image.transform.position, Quaternion.Euler(90f, 0f, 0f));
         if (!instance.GetComponent<Collider>())
             instance.AddComponent<BoxCollider>();
-        // Asignar etiqueta para poder buscar todos posteriormente.
+        // Asigna la etiqueta "Overlay" para poder eliminarla posteriormente.
         instance.tag = "Overlay";
-
         overlays[image] = instance;
     }
 
@@ -187,8 +181,8 @@ public class ImageTrackingOverlayManager : MonoBehaviour
     }
 
     // Al pulsar el botón:
-    // • Si no hay overlay fijo, se fija el overlay del primer pool disponible.
-    // • Si ya hay overlay fijo, se destruyen TODOS los overlays para reiniciar.
+    // - Si no hay overlay fijo, se fija el overlay del primer pool disponible.
+    // - Si ya hay overlay fijo, se destruyen TODOS los overlays (para "empezar de cero").
     void OnFullScreenButtonClicked()
     {
         if (fixedOverlay == null)
@@ -216,55 +210,55 @@ public class ImageTrackingOverlayManager : MonoBehaviour
         {
             DestroyAllOverlays();
             fixedOverlay = null;
-            if (fullScreenButton)
-                fullScreenButton.gameObject.SetActive(false);
+            if (fullScreenButton) fullScreenButton.gameObject.SetActive(false);
         }
     }
 
     // Destruye TODOS los overlays existentes en la escena.
     void DestroyAllOverlays()
     {
-        // Destruir overlays gestionados en el diccionario.
+        // Destruye los overlays registrados en el diccionario.
         foreach (var overlay in new List<GameObject>(overlays.Values))
         {
-            if (overlay)
-                Destroy(overlay);
+            if (overlay) Destroy(overlay);
         }
         overlays.Clear();
         activePoolImages.Clear();
 
-        // Destruir overlay fijo, si existe.
+        // Destruye el overlay fijo, si existe.
         if (fixedOverlay)
         {
             Destroy(fixedOverlay);
             fixedOverlay = null;
         }
 
-        // Adicionalmente, buscar y destruir cualquier GameObject con la etiqueta "Overlay".
+        // Además, busca y destruye cualquier GameObject con la etiqueta "Overlay".
         GameObject[] allOverlays = GameObject.FindGameObjectsWithTag("Overlay");
         foreach (GameObject ovr in allOverlays)
         {
-            Destroy(ovr);
+            if (ovr) Destroy(ovr);
         }
     }
 
     // Configura el overlay fijo: lo centra en pantalla, lo orienta para mirar a la cámara y lo escala al 90% del ancho.
     void SetFixedOverlay(GameObject overlay)
     {
+        // Posición central en pantalla a la distancia displayDistance.
         Vector3 screenCenter = new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, displayDistance);
         Vector3 worldCenter = arCamera.ScreenToWorldPoint(screenCenter);
         overlay.transform.position = worldCenter;
 
-        // Orientar para que la cara frontal (local +Z) mire a la cámara.
+        // Orienta para que la cara frontal (local +Z) mire a la cámara.
         Vector3 dir = overlay.transform.position - arCamera.transform.position;
         overlay.transform.rotation = Quaternion.LookRotation(dir, arCamera.transform.up);
 
+        // Calcula el ancho de pantalla en world units y define el 90% como ancho objetivo.
         float halfFOV = arCamera.fieldOfView * 0.5f * Mathf.Deg2Rad;
         float screenHeightWorld = 2f * displayDistance * Mathf.Tan(halfFOV);
         float screenWidthWorld = screenHeightWorld * arCamera.aspect;
-        float targetWidth = screenWidthWorld * 0.9f;  // 90% del ancho.
+        float targetWidth = screenWidthWorld * 0.9f;
 
-        // Obtener el ancho actual usando BoxCollider o Renderer.
+        // Mide el ancho actual usando el BoxCollider (o el Renderer si no lo tiene).
         float currentWidth = 1f;
         BoxCollider bc = overlay.GetComponent<BoxCollider>();
         if (bc != null)
@@ -275,7 +269,6 @@ public class ImageTrackingOverlayManager : MonoBehaviour
             if (rend != null)
                 currentWidth = rend.bounds.size.x;
         }
-
         float sf = targetWidth / currentWidth;
         overlay.transform.localScale = overlay.transform.localScale * sf;
     }

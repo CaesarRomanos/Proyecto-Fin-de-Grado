@@ -7,29 +7,30 @@ using UnityEngine.XR.ARSubsystems;
 
 public class SimpleImageIncrementer : MonoBehaviour
 {
-    [SerializeField, Tooltip("ARTrackedImageManager component from the scene")]
+    [SerializeField, Tooltip("Componente ARTrackedImageManager de la escena.")]
     private ARTrackedImageManager trackedImageManager;
 
-    [SerializeField, Tooltip("Base API URL for increment endpoint")]
+    [SerializeField, Tooltip("URL base de la API para incrementar")]
     private string baseApiUrl = "http://192.168.88.234:5000/increment/";
 
-    [SerializeField, Tooltip("Reference to the UserRegister component")]
+    // Referencia al script que registra al usuario
+    [SerializeField, Tooltip("Referencia al componente que registra el usuario único")]
     private UserRegister userRegister;
 
-    // To avoid multiple calls for the same image during a session
+    // Registro para evitar múltiples llamadas a la misma imagen en esta sesión
     private HashSet<string> incrementedReferences = new HashSet<string>();
 
     private string userId;
 
     void Start()
     {
-        if (userRegister == null)
+        if (userRegister != null)
         {
-            Debug.LogError("UserRegister component is not assigned.");
+            userId = userRegister.GetUserId();
         }
         else
         {
-            userId = userRegister.GetUserId();
+            Debug.LogError("No se ha asignado el componente UserRegister.");
         }
     }
 
@@ -70,7 +71,7 @@ public class SimpleImageIncrementer : MonoBehaviour
 
     private IEnumerator CallIncrement(string refName)
     {
-        // Prepare the form data including the user_id
+        // Se crea un formulario con el user_id
         WWWForm form = new WWWForm();
         form.AddField("user_id", userId);
 
@@ -80,11 +81,7 @@ public class SimpleImageIncrementer : MonoBehaviour
 
         if (request.result != UnityWebRequest.Result.Success)
         {
-            Debug.LogError("Error calling increment for " + refName + ": " + request.error);
-        }
-        else
-        {
-            Debug.Log("Increment for " + refName + " was successful.");
+            Debug.LogError("Error al llamar a " + postUrl + ": " + request.error);
         }
     }
 }

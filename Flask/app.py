@@ -17,7 +17,7 @@ stats_collection = db['stats']
 
 # Inicializa el documento de estadísticas global si no existe
 if stats_collection.count_documents({"_id": "global"}) == 0:
-    stats_collection.insert_one({"_id": "global", "unique_users": 0, "users_completed": 0, "average_time": 0})
+    stats_collection.insert_one({"_id": "global", "unique_users": 0, "users_completed": 0})
 
 # Inicialización de los documentos de imágenes si no existen
 initial_docs = [
@@ -30,7 +30,6 @@ for doc in initial_docs:
     if collection.count_documents({"id": doc["id"]}, limit=1) == 0:
         collection.insert_one(doc)
 
-# Endpoint de bienvenida
 @app.route('/')
 def home():
     return jsonify({"message": "Bienvenido a la API de Gormaz"}), 200
@@ -39,13 +38,8 @@ def home():
 @app.route('/registerUser/<user_id>', methods=['POST'])
 def register_user(user_id):
     if not users_collection.find_one({"user_id": user_id}):
-        # Registra al usuario con campos iniciales, incluyendo totalTime en 0
-        users_collection.insert_one({
-            "user_id": user_id,
-            "scanned": [],
-            "completed": False,
-            "totalTime": 0
-        })
+        # Registra al usuario y asigna una lista vacía de imágenes escaneadas
+        users_collection.insert_one({"user_id": user_id, "scanned": [], "completed": False})
         stats_collection.update_one({"_id": "global"}, {"$inc": {"unique_users": 1}})
         return jsonify({"message": f"Usuario {user_id} registrado exitosamente."}), 201
     return jsonify({"message": "Usuario ya registrado."}), 200
@@ -64,8 +58,8 @@ def increment_counter(doc_id):
     else:
         return jsonify({"error": f"No se pudo incrementar el contador para {doc_id}"}), 400
 
-    # Actualiza el registro del usuario:
-    # Se agrega el doc_id a la lista de imágenes escaneadas (sin duplicados)
+    # Actualiza el registro del usuario
+    # Agrega el doc_id en el array 'scanned' (sin duplicados)
     users_collection.update_one({"user_id": user_id}, {"$addToSet": {"scanned": doc_id}})
     
     # Recupera el registro actualizado del usuario
@@ -81,45 +75,6 @@ def increment_counter(doc_id):
         "scans": doc["scans"],
         "user_scanned": scanned_images
     })
-
-# Nuevo endpoint para actualizar el tiempo de sesión del usuario
-@app.route('/updateTime/<user_id>', methods=['POST'])
-def update_session_time(user_id):
-    session_time = request.form.get("session_time")
-    if session_time is None:
-        return jsonify({"error": "Falta el session_time en la solicitud."}), 400
-    try:
-        session_time = float(session_time)
-    except ValueError:
-        return jsonify({"error": "session_time debe ser un número."}), 400
-
-    # Actualiza el campo totalTime del usuario
-    result = users_collection.update_one({"user_id": user_id}, {"$inc": {"totalTime": session_time}})
-    if result.matched_count:
-        # Se recalcula el promedio acumulado de tiempo para todos los usuarios
-        pipeline = [
-            {
-                "$group": {
-                    "_id": None,
-                    "total_time": {"$sum": "$totalTime"}
-                }
-            }
-        ]
-        agg_result = list(users_collection.aggregate(pipeline))
-        total_time_all = agg_result[0]["total_time"] if agg_result else 0
-        count_users = users_collection.count_documents({})
-        average_time = total_time_all / count_users if count_users else 0
-
-        # Se actualiza el campo average_time en las estadísticas globales
-        stats_collection.update_one({"_id": "global"}, {"$set": {"average_time": average_time}})
-
-        return jsonify({
-            "message": f"Tiempo de sesión actualizado para el usuario {user_id}.",
-            "session_time": session_time,
-            "average_time": average_time
-        }), 200
-    else:
-        return jsonify({"error": "Usuario no encontrado."}), 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

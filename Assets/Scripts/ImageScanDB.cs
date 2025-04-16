@@ -13,8 +13,26 @@ public class SimpleImageIncrementer : MonoBehaviour
     [SerializeField, Tooltip("URL base de la API para incrementar")]
     private string baseApiUrl = "http://192.168.88.234:5000/increment/";
 
-    // Registro para evitar múltiples llamadas a la misma imagen
+    // Referencia al script que registra al usuario
+    [SerializeField, Tooltip("Referencia al componente que registra el usuario único")]
+    private UserRegister userRegister;
+
+    // Registro para evitar múltiples llamadas a la misma imagen en esta sesión
     private HashSet<string> incrementedReferences = new HashSet<string>();
+
+    private string userId;
+
+    void Start()
+    {
+        if (userRegister != null)
+        {
+            userId = userRegister.GetUserId();
+        }
+        else
+        {
+            Debug.LogError("No se ha asignado el componente UserRegister.");
+        }
+    }
 
     void OnEnable()
     {
@@ -53,8 +71,12 @@ public class SimpleImageIncrementer : MonoBehaviour
 
     private IEnumerator CallIncrement(string refName)
     {
+        // Se crea un formulario con el user_id
+        WWWForm form = new WWWForm();
+        form.AddField("user_id", userId);
+
         string postUrl = baseApiUrl + refName;
-        UnityWebRequest request = UnityWebRequest.Post(postUrl, new WWWForm());
+        UnityWebRequest request = UnityWebRequest.Post(postUrl, form);
         yield return request.SendWebRequest();
 
         if (request.result != UnityWebRequest.Result.Success)

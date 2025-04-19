@@ -1,4 +1,4 @@
-# app.py (Flask actualizado)
+# app.py
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from pymongo import MongoClient
@@ -10,17 +10,17 @@ CORS(app)
 client = MongoClient('mongodb://localhost:27017/')
 db = client['GormazAR']
 images_col = db['Gormaz_coleccion']
-users_col = db['users']
-stats_col = db['stats']
+users_col  = db['users']
+stats_col  = db['stats']
 
-# Inicializa estadísticas globales (incluye total_time y sessions_count)
+# Inicializa estadísticas globales (ahora usa average_session_time y sessions_count)
 if stats_col.count_documents({"_id": "global"}) == 0:
     stats_col.insert_one({
         "_id": "global",
         "unique_users": 0,
         "users_completed": 0,
-        "total_time": 0.0,
-        "sessions_count": 0
+        "sessions_count": 0,
+        "average_session_time": 0.0
     })
 
 # Inicializa documentos de imágenes si no existen
@@ -58,21 +58,21 @@ def increment_counter(doc_id):
     doc = images_col.find_one({"id": doc_id})
     users_col.update_one({"user_id": user_id}, {"$addToSet": {"scanned": doc_id}})
 
-    user = users_col.find_one({"user_id": user_id})
+    user    = users_col.find_one({"user_id": user_id})
     scanned = user.get("scanned", [])
     if len(scanned) == 3 and not user.get("completed", False):
         users_col.update_one({"user_id": user_id}, {"$set": {"completed": True}})
         stats_col.update_one({"_id": "global"}, {"$inc": {"users_completed": 1}})
 
     return jsonify({
-        "name": doc["name"],
-        "scans": doc["scans"],
+        "name":         doc["name"],
+        "scans":        doc["scans"],
         "user_scanned": scanned
     }), 200
 
 @app.route('/endSession/<user_id>', methods=['POST'])
 def end_session(user_id):
-    # Recibe la duración de la sesión en segundos
+    # Obtener duración enviada
     duration = request.form.get("duration")
     if duration is None:
         return jsonify({"error": "Falta el campo 'duration'."}), 400
@@ -81,17 +81,27 @@ def end_session(user_id):
     except ValueError:
         return jsonify({"error": "El valor de 'duration' no es válido."}), 400
 
-    # Actualiza estadísticas globales
+    # Leer estadística actual
+    stats = stats_col.find_one({"_id": "global"})
+    current_count = stats.get("sessions_count", 0)
+    current_avg   = stats.get("average_session_time", 0.0)
+
+    # Calcular nueva media
+    new_count = current_count + 1
+    new_avg   = (current_avg * current_count + duration) / new_count
+
+    # Actualizar sólo sessions_count y average_session_time
     stats_col.update_one(
         {"_id": "global"},
-        {"$inc": {"total_time": duration, "sessions_count": 1}}
+        {"$set": {
+            "sessions_count": new_count,
+            "average_session_time": new_avg
+        }}
     )
-    stats = stats_col.find_one({"_id": "global"})
-    avg = stats["total_time"] / stats["sessions_count"] if stats["sessions_count"] > 0 else 0.0
 
     return jsonify({
-        "session_duration": duration,
-        "average_session_time": avg
+        "session_duration":        duration,
+        "average_session_time":    new_avg
     }), 200
 
 if __name__ == '__main__':

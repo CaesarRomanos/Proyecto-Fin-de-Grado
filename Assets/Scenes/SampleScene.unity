@@ -521,7 +521,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0efebd2da51bdfc4280bd2d406722de2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  registerUrl: http://192.168.88.234:5000/registerUser/
+  registerUrl: http://192.168.52.234:5000/registerUser/
+  endSessionUrl: http://192.168.52.234:5000/endSession/
 --- !u!4 &1533727742
 Transform:
   m_ObjectHideFlags: 0
@@ -1033,7 +1034,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   trackedImageManager: {fileID: 608830362}
-  baseApiUrl: http://192.168.88.234:5000/increment/
+  baseApiUrl: http://192.168.52.234:5000/increment/
   userRegister: {fileID: 1533727741}
 --- !u!4 &1976923997
 Transform:

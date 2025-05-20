@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 public class ImageTrackingOverlayManager : MonoBehaviour
 {
-    [Header("Configuración AR")]
+    [Header("AR configuration")]
     [Tooltip("Componente ARTrackedImageManager de la escena.")]
     [SerializeField] private ARTrackedImageManager trackedImageManager;
     [Tooltip("Prefab para 'fecha gótica' (irlDate).")]

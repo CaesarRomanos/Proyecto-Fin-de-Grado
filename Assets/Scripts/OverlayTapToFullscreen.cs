@@ -1,3 +1,5 @@
+// ImageTrackingOverlayManager.cs
+// Manages AR image tracking overlays, creating, updating, and fixing them in fullscreen mode.
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.ARFoundation;
@@ -6,36 +8,39 @@ using System.Collections.Generic;
 
 public class ImageTrackingOverlayManager : MonoBehaviour
 {
-    [Header("AR configuration")]
-    [Tooltip("Componente ARTrackedImageManager de la escena.")]
+    [Header("AR Setup")]
+    [Tooltip("ARTrackedImageManager component for tracking reference images.")]
     [SerializeField] private ARTrackedImageManager trackedImageManager;
-    [Tooltip("Prefab para 'fecha gótica' (irlDate).")]
+
+    [Tooltip("Prefab for the gothic date overlay (irlDate).")]
     [SerializeField] private GameObject overlayPrefab1;
-    [Tooltip("Prefab para 'soldado' (irlSoldier).")]
+    [Tooltip("Prefab for the soldier overlay (irlSoldier).")]
     [SerializeField] private GameObject overlayPrefab2;
-    [Tooltip("Prefab para 'monje' (irlMonk).")]
+    [Tooltip("Prefab for the monk overlay (irlMonk).")]
     [SerializeField] private GameObject overlayPrefab3;
-    [Tooltip("Factor para reducir el tamaño del overlay en modo AR.")]
+
+    [Tooltip("Scale factor to apply to AR overlays.")]
     [SerializeField] private float scaleFactor = 0.1f;
 
-    [Header("Configuración UI y Overlay Fijo")]
-    [Tooltip("Botón del Canvas para fijar/eliminar el overlay.")]
+    [Header("UI and Fixed Overlay Setup")]
+    [Tooltip("Button to toggle pinning/unpinning the overlay in fullscreen.")]
     [SerializeField] private Button fullScreenButton;
-    [Tooltip("Cámara AR para conversión de coordenadas.")]
+    [Tooltip("AR camera used for world-to-screen coordinate conversion.")]
     [SerializeField] private Camera arCamera;
-    [Tooltip("Distancia (world units) para mostrar el overlay fijo.")]
+    [Tooltip("Distance from camera at which to display the pinned overlay in world units.")]
     [SerializeField] private float displayDistance = 2f;
 
-    // Seguimiento de overlays y de las imágenes activas (por pool)
+    // Maps each tracked image to its AR overlay instance
     private Dictionary<ARTrackedImage, GameObject> overlays = new Dictionary<ARTrackedImage, GameObject>();
+    // Tracks currently active reference image per category pool
     private Dictionary<string, ARTrackedImage> activePoolImages = new Dictionary<string, ARTrackedImage>();
 
-    // Pools según el nombre de referencia
+    // Pool definitions by reference image name
     private List<string> datePool = new List<string> { "irlDate" };
     private List<string> soldierPool = new List<string> { "irlSoldier" };
     private List<string> monkPool = new List<string> { "irlMonk" };
 
-    // Overlay fijo (cuando se pulsa el botón)
+    // Holds the one pinned overlay when in fullscreen mode
     private GameObject fixedOverlay = null;
 
     void OnEnable()
@@ -61,7 +66,7 @@ public class ImageTrackingOverlayManager : MonoBehaviour
             fullScreenButton.onClick.RemoveListener(OnFullScreenButtonClicked);
     }
 
-    // Solo se procesa el tracking si no hay un overlay fijo ya asignado.
+    // Skip processing image events if an overlay is pinned fullscreen
     void OnTrackedImagesChanged(ARTrackedImagesChangedEventArgs eventArgs)
     {
         if (fixedOverlay != null)
@@ -77,28 +82,29 @@ public class ImageTrackingOverlayManager : MonoBehaviour
         UpdateOverlays();
     }
 
+    // Registers the latest valid tracked image per pool
     void ProcessImage(ARTrackedImage image)
     {
         if (image.trackingState != TrackingState.Tracking)
             return;
+
         string poolKey = GetPoolKey(image.referenceImage.name);
         if (string.IsNullOrEmpty(poolKey))
             return;
+
         activePoolImages[poolKey] = image;
     }
 
+    // Determines which pool a reference name belongs to
     string GetPoolKey(string refName)
     {
-        if (datePool.Contains(refName))
-            return "irlDate";
-        if (soldierPool.Contains(refName))
-            return "irlSoldier";
-        if (monkPool.Contains(refName))
-            return "irlMonk";
+        if (datePool.Contains(refName)) return "irlDate";
+        if (soldierPool.Contains(refName)) return "irlSoldier";
+        if (monkPool.Contains(refName)) return "irlMonk";
         return null;
     }
 
-    // Para cada pool, crea o actualiza el overlay AR correspondiente.
+    // Creates or updates overlays for each pool based on the latest tracked image
     void UpdateOverlays()
     {
         foreach (string poolKey in new string[] { "irlDate", "irlSoldier", "irlMonk" })
@@ -106,7 +112,7 @@ public class ImageTrackingOverlayManager : MonoBehaviour
             ARTrackedImage candidate = activePoolImages.ContainsKey(poolKey) ? activePoolImages[poolKey] : null;
             if (candidate == null)
             {
-                // Elimina los overlays asociados a este pool.
+                // Remove overlays for this pool if no candidate
                 foreach (var kvp in new List<ARTrackedImage>(overlays.Keys))
                 {
                     if (GetPoolKey(kvp.referenceImage.name) == poolKey)
@@ -114,9 +120,10 @@ public class ImageTrackingOverlayManager : MonoBehaviour
                 }
                 continue;
             }
+
             if (!overlays.ContainsKey(candidate))
             {
-                // Elimina overlays anteriores del mismo pool y crea uno nuevo.
+                // Remove old pool overlay and create a new one
                 foreach (var kvp in new List<ARTrackedImage>(overlays.Keys))
                 {
                     if (GetPoolKey(kvp.referenceImage.name) == poolKey)
@@ -127,43 +134,44 @@ public class ImageTrackingOverlayManager : MonoBehaviour
             }
             else
             {
+                // Update existing overlay transform and scale
                 UpdateOverlay(candidate);
             }
         }
     }
 
+    // Instantiates the correct prefab overlay for the tracked image
     void CreateOverlay(ARTrackedImage image, string poolKey)
     {
         GameObject prefab = null;
-        if (poolKey == "irlDate")
-            prefab = overlayPrefab1;
-        else if (poolKey == "irlSoldier")
-            prefab = overlayPrefab2;
-        else if (poolKey == "irlMonk")
-            prefab = overlayPrefab3;
-        if (prefab == null)
-            return;
+        if (poolKey == "irlDate")      prefab = overlayPrefab1;
+        else if (poolKey == "irlSoldier") prefab = overlayPrefab2;
+        else if (poolKey == "irlMonk")   prefab = overlayPrefab3;
+        if (prefab == null) return;
 
-        // Instancia con rotación base para AR (90° en X)
+        // Instantiate with a 90° X rotation so it lays flat on the tracked surface
         GameObject instance = Instantiate(prefab, image.transform.position, Quaternion.Euler(90f, 0f, 0f));
         if (!instance.GetComponent<Collider>())
             instance.AddComponent<BoxCollider>();
-        // Asigna la etiqueta "Overlay" para poder eliminarla posteriormente.
-        instance.tag = "Overlay";
+
+        instance.tag = "Overlay"; // Tag for easy cleanup
         overlays[image] = instance;
     }
 
+    // Updates the overlay's position, rotation, and scale to match the tracked image
     void UpdateOverlay(ARTrackedImage image)
     {
-        if (!overlays.ContainsKey(image))
-            return;
+        if (!overlays.ContainsKey(image)) return;
+
         GameObject instance = overlays[image];
         instance.transform.position = image.transform.position;
         instance.transform.rotation = image.transform.rotation * Quaternion.Euler(90f, 0f, 0f);
+
         Vector2 size = image.size;
         instance.transform.localScale = new Vector3(size.x * scaleFactor, size.y * scaleFactor, 1f);
     }
 
+    // Removes an overlay when its tracked image is removed
     void RemoveOverlay(ARTrackedImage image)
     {
         if (overlays.ContainsKey(image))
@@ -171,22 +179,20 @@ public class ImageTrackingOverlayManager : MonoBehaviour
             Destroy(overlays[image]);
             overlays.Remove(image);
         }
+
         string poolKey = GetPoolKey(image.referenceImage.name);
-        if (!string.IsNullOrEmpty(poolKey) &&
-            activePoolImages.ContainsKey(poolKey) &&
-            activePoolImages[poolKey] == image)
+        if (!string.IsNullOrEmpty(poolKey) && activePoolImages.ContainsKey(poolKey) && activePoolImages[poolKey] == image)
         {
             activePoolImages.Remove(poolKey);
         }
     }
 
-    // Al pulsar el botón:
-    // - Si no hay overlay fijo, se fija el overlay del primer pool disponible.
-    // - Si ya hay overlay fijo, se destruyen TODOS los overlays (para "empezar de cero").
+    // Handles pinning/unpinning overlay to fullscreen when the button is clicked
     void OnFullScreenButtonClicked()
     {
         if (fixedOverlay == null)
         {
+            // Pin the first available pool overlay
             ARTrackedImage candidate = null;
             string selectedPool = null;
             foreach (string pool in new string[] { "irlDate", "irlSoldier", "irlMonk" })
@@ -208,16 +214,16 @@ public class ImageTrackingOverlayManager : MonoBehaviour
         }
         else
         {
+            // Unpin: destroy all overlays and hide button
             DestroyAllOverlays();
             fixedOverlay = null;
             if (fullScreenButton) fullScreenButton.gameObject.SetActive(false);
         }
     }
 
-    // Destruye TODOS los overlays existentes en la escena.
+    // Destroys all overlay GameObjects in scene and clears tracking dictionaries
     void DestroyAllOverlays()
     {
-        // Destruye los overlays registrados en el diccionario.
         foreach (var overlay in new List<GameObject>(overlays.Values))
         {
             if (overlay) Destroy(overlay);
@@ -225,14 +231,13 @@ public class ImageTrackingOverlayManager : MonoBehaviour
         overlays.Clear();
         activePoolImages.Clear();
 
-        // Destruye el overlay fijo, si existe.
         if (fixedOverlay)
         {
             Destroy(fixedOverlay);
             fixedOverlay = null;
         }
 
-        // Además, busca y destruye cualquier GameObject con la etiqueta "Overlay".
+        // Also destroy any leftover objects tagged as "Overlay"
         GameObject[] allOverlays = GameObject.FindGameObjectsWithTag("Overlay");
         foreach (GameObject ovr in allOverlays)
         {
@@ -240,25 +245,25 @@ public class ImageTrackingOverlayManager : MonoBehaviour
         }
     }
 
-    // Configura el overlay fijo: lo centra en pantalla, lo orienta para mirar a la cámara y lo escala al 90% del ancho.
+    // Configures the pinned overlay to face the camera, center it, and scale to 90% of screen width
     void SetFixedOverlay(GameObject overlay)
     {
-        // Posición central en pantalla a la distancia displayDistance.
+        // Compute world position at screen center with specified distance
         Vector3 screenCenter = new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, displayDistance);
         Vector3 worldCenter = arCamera.ScreenToWorldPoint(screenCenter);
         overlay.transform.position = worldCenter;
 
-        // Orienta para que la cara frontal (local +Z) mire a la cámara.
+        // Rotate overlay to face the camera
         Vector3 dir = overlay.transform.position - arCamera.transform.position;
         overlay.transform.rotation = Quaternion.LookRotation(dir, arCamera.transform.up);
 
-        // Calcula el ancho de pantalla en world units y define el 90% como ancho objetivo.
+        // Calculate target width (90% of screen width in world units)
         float halfFOV = arCamera.fieldOfView * 0.5f * Mathf.Deg2Rad;
         float screenHeightWorld = 2f * displayDistance * Mathf.Tan(halfFOV);
         float screenWidthWorld = screenHeightWorld * arCamera.aspect;
         float targetWidth = screenWidthWorld * 0.9f;
 
-        // Mide el ancho actual usando el BoxCollider (o el Renderer si no lo tiene).
+        // Measure current overlay width via BoxCollider or Renderer bounds
         float currentWidth = 1f;
         BoxCollider bc = overlay.GetComponent<BoxCollider>();
         if (bc != null)
@@ -269,7 +274,9 @@ public class ImageTrackingOverlayManager : MonoBehaviour
             if (rend != null)
                 currentWidth = rend.bounds.size.x;
         }
-        float sf = targetWidth / currentWidth;
-        overlay.transform.localScale = overlay.transform.localScale * sf;
+
+        // Scale uniformly to reach target width
+        float scaleScale = targetWidth / currentWidth;
+        overlay.transform.localScale *= scaleScale;
     }
 }

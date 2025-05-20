@@ -9,7 +9,7 @@ CORS(app)
 # Conexión a MongoDB
 client = MongoClient('mongodb://localhost:27017/')
 db = client['GormazAR']
-images_col = db['Gormaz_coleccion']
+images_col = db['graffiti']
 users_col  = db['users']
 stats_col  = db['stats']
 
